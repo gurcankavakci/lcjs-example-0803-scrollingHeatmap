@@ -1,6 +1,6 @@
 # Scrolling Heatmap
 
-![Scrolling Heatmap](scrollingHeatmap.png)
+![Scrolling Heatmap](ScrollingHeatmap.png)
 
 This demo application belongs to the set of examples for LightningChart JS, data visualization library for JavaScript.
 
@@ -78,8 +78,8 @@ Direct developer email support can be purchased through a [Support Plan][4] or b
 © Arction Ltd 2009-2020. All rights reserved.
 
 
-[Intensity Series Types]: https://www.arction.com/lightningchart-js-api-documentation/v2.0.0/globals.html#intensityseriestypes
-[Intensity Grid]: https://www.arction.com/lightningchart-js-api-documentation/v2.0.0/classes/intensitygridseries.html
-[Paletted Fill Style]: https://www.arction.com/lightningchart-js-api-documentation/v2.0.0/classes/palettedfill.html
-[LUT]: https://www.arction.com/lightningchart-js-api-documentation/v2.0.0/classes/lut.html
+[Intensity Series Types]: https://www.arction.com/lightningchart-js-api-documentation/v2.1.0/globals.html#intensityseriestypes
+[Intensity Grid]: https://www.arction.com/lightningchart-js-api-documentation/v2.1.0/classes/intensitygridseries.html
+[Paletted Fill Style]: https://www.arction.com/lightningchart-js-api-documentation/v2.1.0/classes/palettedfill.html
+[LUT]: https://www.arction.com/lightningchart-js-api-documentation/v2.1.0/classes/lut.html
 

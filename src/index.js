@@ -9,126 +9,78 @@ const {
     lightningChart,
     PalettedFill,
     LUT,
-    ColorHEX,
-    UIElementBuilders,
-    UIOrigins,
-    UIDraggingModes,
+    ColorHSV,
     Themes
 } = lcjs
 
 const {
-    createProgressiveFunctionGenerator
+    createSpectrumDataGenerator
 } = require('@arction/xydata')
 
-/**
- * Create data matrix for heatmap from one dimensional array
- * @param {Uint8Array}  data        FFT Data
- * @param {number}      strideSize  Single data block width
- * @param {number}      tickCount    Data row count
- */
-const remapDataToTwoDimensionalMatrix = (data, strideSize, tickCount) => {
-    /**
-     * @type {Array<number>}
-     */
-    const arr = Array.from(data)
 
-    // Map the one dimensional data to two dimensional data where data goes from right to left
-    // [1, 2, 3, 4, 5, 6]
-    // -> strideSize = 2
-    // -> rowCount = 3
-    // maps to
-    // [1, 4]
-    // [2, 5]
-    // [3, 6]
-    const output = Array.from(Array(strideSize)).map(() => Array.from(Array(tickCount)))
-    for (let row = 0; row < strideSize; row += 1) {
-        for (let col = 0; col <= tickCount; col += 1) {
-            output[row][col] = arr[col * strideSize + row]
-        }
-    }
+// Length of single data sample.
+const dataSampleSize = 300
 
-    return output
-}
+// Length of data history.
+const dataHistoryLength = 100
 
-// Dimensions for the Heatmap. Also used to generate correct size array.
-const resolution = 100
-const historyLen = 500
 
-// Create colorpalette for the LUT. The colors should interpolate between values.
-const lut = new LUT({
+// Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
+const lut = new LUT( {
     steps: [
-        { value: 0, color: ColorHEX('#1000') },
-        { value: 40, color: ColorHEX('#1000') },
-        { value: 50, color: ColorHEX('#f00') }
+        { value: 0, color: ColorHSV(0, 1, 0) },
+        { value: 100 * (1 / 6), color: ColorHSV(270, 0.84, 0.2) },
+        { value: 100 * (2 / 6), color: ColorHSV(289, 0.86, 0.35) },
+        { value: 100 * (3 / 6), color: ColorHSV(324, 0.97, 0.56) },
+        { value: 100 * (4 / 6), color: ColorHSV(1, 1, 1) },
+        { value: 100 * (5 / 6), color: ColorHSV(44, 0.64, 1) }
     ],
     interpolate: true
-})
+} )
+const paletteFill = new PalettedFill( { lut, lookUpProperty: 'y' } )
 
-const paletteFill = new PalettedFill({ lut })
 
-// Create intensity grid
+// Create ChartXY.
 const chartXY = lightningChart().ChartXY({
     // theme: Themes.dark
 })
+    .setTitle( 'Scrolling Heatmap Spectrogram' )
+chartXY.getDefaultAxisX()
+    .setTitle( 'Time' )
+    // Set Axis range immediately to prevent initial animation for optimal performance.
+    .setInterval( 0, dataHistoryLength )
+chartXY.getDefaultAxisY()
+    .setTitle( 'Frequency (Hz)' )
+    // Set Axis range immediately to prevent initial animation for optimal performance.
+    .setInterval( 0, dataSampleSize, false, true )
+
+
+// Create Heatmap Series.
+// pixelate: true adds one extra col+row to Grid, offset that here.
+const columns = dataHistoryLength - 1
+const rows = dataSampleSize - 1
 const intensityOptions = {
-    rows: resolution,
-    columns: historyLen,
-    start: { x: 0, y: 0 },
-    end: { x: 100, y: 50 },
-    pixelate: false
+    rows,
+    columns,
+    start: { x: dataHistoryLength, y: 0 },
+    end: { x: 0, y: dataSampleSize },
+    pixelate: true
 }
-const grid = chartXY.addHeatmapSeries(intensityOptions)
-    .setFillStyle(paletteFill)
+const heatmapSeries = chartXY.addHeatmapSeries(intensityOptions)
+    .setFillStyle( paletteFill )
+    .setMouseInteractions( false )
+    .setCursorEnabled( false )
 
-// Index for sweeping mode.
-let ind = 0
-
-// Add a button to the top left of the chart to toggle between
-// sweeping update and scrolling update for the intensity grid.
-const toggleButton = chartXY.addUIElement(UIElementBuilders.CheckBox)
-    .setText('Toggle sweeping on / off')
-    .setOn(false)
-    .setPosition({ x: 5, y: 99 })
-    .setOrigin(UIOrigins.LeftTop)
-    .setDraggingMode(UIDraggingModes.notDraggable)
-
-toggleButton
-    .onSwitch(() => {
-        ind = 0
-        grid.reset(intensityOptions)
-    })
-
-// Update the heatmap by sweeping the columns
-const sweepColumns = (arr, ind) => {
-    const remappedData = remapDataToTwoDimensionalMatrix(arr, resolution, 1)
-    grid.invalidateValuesOnly(remappedData, { column: { start: ind, end: ind + 1 }, row: { start: 0, end: resolution - 1 } })
-}
-
-createProgressiveFunctionGenerator()
-    .setSamplingFunction((x) => ((Math.sin(x)) * resolution) / 2)
-    .setStep(0.01)
-    .setStart(0)
-    .setEnd(Math.PI * 2)
+// Stream in continous data.
+createSpectrumDataGenerator()
+    .setSampleSize( dataSampleSize )
+    .setNumberOfSamples( dataHistoryLength )
     .generate()
-    .setStreamRepeat(true)
-    .setStreamInterval(1000 / 60)
-    .setStreamBatchSize(1)
+    .setStreamRepeat( true )
+    .setStreamInterval( 1000 / 60 )
+    .setStreamBatchSize( 1 )
     .toStream()
-    .forEach((data) => {
-        let values = []
-        const y = data.y
-        for (let i = 0; i < resolution; i++) {
-            values[i] = Math.min(i - y, resolution - (i - y))
-        }
-        // State for the sweeping toggle.
-        if (!toggleButton.getOn()) {
-            grid.addColumn(1, 'value', [values])
-        } else {
-            // Sweeping mode. Add data to heatmap by invalidating values
-            // with given data.
-            sweepColumns(values, ind)
-            ind += 1
-            if (ind >= historyLen - 1)
-                ind = 0
-        }
-    })
+    // Scale Intensity values from [0.0, 1.0] to [0.0, 80]
+    .map( sample => sample.map( intensity => intensity * 80 ) )
+    // Push Intensity values to Surface Grid as Columns.
+    .forEach( sample => heatmapSeries.addColumn( 1, 'value', [sample] ) )

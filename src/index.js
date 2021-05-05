@@ -24,20 +24,20 @@ const dataSampleSize = 300
 // Length of data history.
 const dataHistoryLength = 100
 
-
 // Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
 const lut = new LUT( {
     steps: [
         { value: 0, color: ColorHSV(0, 1, 0) },
-        { value: 100 * (1 / 6), color: ColorHSV(270, 0.84, 0.2) },
-        { value: 100 * (2 / 6), color: ColorHSV(289, 0.86, 0.35) },
-        { value: 100 * (3 / 6), color: ColorHSV(324, 0.97, 0.56) },
-        { value: 100 * (4 / 6), color: ColorHSV(1, 1, 1) },
-        { value: 100 * (5 / 6), color: ColorHSV(44, 0.64, 1) }
+        { value: 15, color: ColorHSV(270, 0.84, 0.2) },
+        { value: 30, color: ColorHSV(289, 0.86, 0.35) },
+        { value: 45, color: ColorHSV(324, 0.97, 0.56) },
+        { value: 60, color: ColorHSV(1, 1, 1) },
+        { value: 75, color: ColorHSV(44, 0.64, 1) }
     ],
+    units: 'dB',
     interpolate: true
 } )
-const paletteFill = new PalettedFill( { lut, lookUpProperty: 'y' } )
+const paletteFill = new PalettedFill( { lut, lookUpProperty: 'value' } )
 
 
 // Create ChartXY.
@@ -70,6 +70,9 @@ const heatmapSeries = chartXY.addHeatmapSeries(intensityOptions)
     .setFillStyle( paletteFill )
     .setMouseInteractions( false )
     .setCursorEnabled( false )
+
+// Add LegendBox to chart.
+const legend = chartXY.addLegendBox().add(chartXY)
 
 // Stream in continous data.
 createSpectrumDataGenerator()

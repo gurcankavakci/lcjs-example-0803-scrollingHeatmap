@@ -1,6 +1,6 @@
-# Scrolling Heatmap
+# JavaScript Scrolling Heatmap Chart
 
-![Scrolling Heatmap](ScrollingHeatmap.png)
+![JavaScript Scrolling Heatmap Chart](ScrollingHeatmap.png)
 
 This demo application belongs to the set of examples for LightningChart JS, data visualization library for JavaScript.
 

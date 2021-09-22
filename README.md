@@ -123,7 +123,7 @@ Direct developer email support can be purchased through a [Support Plan][4] or b
 © Arction Ltd 2009-2020. All rights reserved.
 
 
-[Scrolling Heatmap Grid Series]: https://www.arction.com/lightningchart-js-api-documentation/v3.1.0/
+[Scrolling Heatmap Grid Series]: https://www.arction.com/lightningchart-js-api-documentation/v3.1.0/classes/heatmapscrollinggridseriesintensityvalues.html
 [Paletted Fill Style]: https://www.arction.com/lightningchart-js-api-documentation/v3.1.0/classes/palettedfill.html
 [Color lookup table]: https://www.arction.com/lightningchart-js-api-documentation/v3.1.0/classes/lut.html
 [Color factory HSV]: https://www.arction.com/lightningchart-js-api-documentation/v3.1.0/globals.html#colorhsv

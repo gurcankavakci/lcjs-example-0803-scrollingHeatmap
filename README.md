@@ -123,13 +123,13 @@ Direct developer email support can be purchased through a [Support Plan][4] or b
 © Arction Ltd 2009-2020. All rights reserved.
 
 
-[Scrolling Heatmap Grid Series]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/classes/heatmapscrollinggridseriesintensityvalues.html
-[Paletted Fill Style]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/classes/palettedfill.html
-[Color lookup table]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/classes/lut.html
-[Color factory HSV]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/globals.html#colorhsv
-[Empty line style]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/globals.html#emptyline
-[Axis automatic scroll options]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/globals.html#axisscrollstrategies
-[Chart XY]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/classes/chartxy.html
-[Axis XY]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/classes/axis.html
-[Legend Box]: https://www.arction.com/lightningchart-js-api-documentation/v3.3.0/classes/chartxy.html#addlegendbox
+[Scrolling Heatmap Grid Series]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/classes/heatmapscrollinggridseriesintensityvalues.html
+[Paletted Fill Style]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/classes/palettedfill.html
+[Color lookup table]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/classes/lut.html
+[Color factory HSV]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/globals.html#colorhsv
+[Empty line style]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/globals.html#emptyline
+[Axis automatic scroll options]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/globals.html#axisscrollstrategies
+[Chart XY]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/classes/chartxy.html
+[Axis XY]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/classes/axis.html
+[Legend Box]: https://www.arction.com/lightningchart-js-api-documentation/v3.4.0/classes/chartxy.html#addlegendbox
 

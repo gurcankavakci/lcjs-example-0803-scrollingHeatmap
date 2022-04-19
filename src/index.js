@@ -20,7 +20,10 @@ const {
 const { createSpectrumDataGenerator } = require("@arction/xydata");
 
 // Length of single data sample.
-const dataSampleSize = 300;
+const dataSampleSize = 512;
+// Sampling rate as samples per second.
+const sampleRateHz = 100
+const sampleIntervalMs = 1000 / sampleRateHz
 
 // Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
 const lut = new LUT({
@@ -48,7 +51,7 @@ chart
   .setTitle("Time")
   // Setup progressive scrolling Axis.
   .setScrollStrategy(AxisScrollStrategies.progressive)
-  .setInterval(-10001, 0)
+  .setInterval(-10 * 1000, 0)
   .setTickStrategy(AxisTickStrategies.Time);
 chart
   .getDefaultAxisY()
@@ -61,8 +64,7 @@ const heatmapSeries = chart
     scrollDimension: "columns",
     resolution: dataSampleSize,
     start: { x: 0, y: 0 },
-    // Heatmap X step is synced with incoming data interval (1 sample per 25 milliseconds).
-    step: { x: 25, y: 1 },
+    step: { x: sampleIntervalMs, y: 1 },
   })
   .setFillStyle(paletteFill)
   .setWireframeStyle(emptyLine)
@@ -97,9 +99,54 @@ createSpectrumDataGenerator()
   .map((sample) => sample.map((intensity) => intensity * 80))
   // Push Intensity values to Surface Grid as Columns.
   .forEach((sample) => {
-    heatmapSeries.addIntensityValues([sample]);
+    pushSample(sample)
     dataAmount += sample.length;
   });
+
+// The following logic ensures a static sampling rate, even if input data might vary.
+// This is done by skipping too frequent samples and duplicating too far apart samples.
+// The precision can be configured by simply changing value of `sampleRateHz`
+let lastSample
+let tFirstSample = 0
+const pushSample = (sample) => {
+  const tNow = performance.now()
+  if (lastSample === undefined) {
+      heatmapSeries.addIntensityValues([sample])
+      lastSample = { sample, time: tNow, i: 0 }
+      tFirstSample = tNow
+      return
+  }
+
+  let nextSampleIndex = lastSample.i + 1
+  let nextSampleTimeExact = tFirstSample + nextSampleIndex * sampleIntervalMs
+  let nextSampleTimeRangeMin = nextSampleTimeExact - sampleIntervalMs / 2
+  let nextSampleTimeRangeMax = nextSampleTimeExact + sampleIntervalMs / 2
+  if (tNow < nextSampleTimeRangeMin) {
+      // Too frequent samples must be scrapped. If this results in visual problems then sample rate must be increased.
+      // console.warn(`Skipped too frequent sample`)
+      return
+  }
+  if (tNow > nextSampleTimeRangeMax) {
+      // At least 1 sample was skipped. In this case, the missing sample slots are filled with the values of the last sample.
+      let repeatedSamplesCount = 0
+      do {
+          heatmapSeries.addIntensityValues([lastSample.sample])
+          repeatedSamplesCount += 1
+          nextSampleIndex += 1
+          nextSampleTimeExact = tFirstSample + nextSampleIndex * sampleIntervalMs
+          nextSampleTimeRangeMin = nextSampleTimeExact - sampleIntervalMs / 2
+          nextSampleTimeRangeMax = nextSampleTimeExact + sampleIntervalMs / 2
+      } while (tNow > nextSampleTimeRangeMax)
+
+      heatmapSeries.addIntensityValues([sample])
+      lastSample = { sample, time: tNow, i: nextSampleIndex }
+      // console.warn(`Filled ${repeatedSamplesCount} samples`)
+      return
+  }
+  // Sample arrived within acceptable, expected time range.
+  heatmapSeries.addIntensityValues([sample])
+  lastSample = { sample, time: tNow, i: nextSampleIndex }
+}
 
 // Display incoming points amount in Chart title.
 const title = chart.getTitle();

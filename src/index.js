@@ -2,166 +2,131 @@
  * LightningChartJS example that showcases simple usage of Scrolling Heatmap Grid Series.
  */
 // Import LightningChartJS
-const lcjs = require("@arction/lcjs");
+const lcjs = require('@arction/lcjs')
 
 // Extract required parts from LightningChartJS.
 const {
-  lightningChart,
-  PalettedFill,
-  LUT,
-  ColorHSV,
-  emptyLine,
-  AxisScrollStrategies,
-  AxisTickStrategies,
-  LegendBoxBuilders,
-  Themes,
-} = lcjs;
+    lightningChart,
+    PalettedFill,
+    LUT,
+    emptyLine,
+    AxisScrollStrategies,
+    AxisTickStrategies,
+    LegendBoxBuilders,
+    regularColorSteps,
+    Themes,
+} = lcjs
 
-const { createSpectrumDataGenerator } = require("@arction/xydata");
+const { createSpectrumDataGenerator } = require('@arction/xydata')
 
 // Length of single data sample.
-const dataSampleSize = 512;
+const dataSampleSize = 512
 // Sampling rate as samples per second.
 const sampleRateHz = 100
 const sampleIntervalMs = 1000 / sampleRateHz
 
-// Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
-const lut = new LUT({
-  steps: [
-    { value: 0, label: "0", color: ColorHSV(0, 1, 0) },
-    { value: 15, label: "15", color: ColorHSV(270, 0.84, 0.2) },
-    { value: 30, label: "30", color: ColorHSV(289, 0.86, 0.35) },
-    { value: 45, label: "45", color: ColorHSV(324, 0.97, 0.56) },
-    { value: 60, label: "60", color: ColorHSV(1, 1, 1) },
-    { value: 75, label: "75", color: ColorHSV(44, 0.64, 1) },
-  ],
-  units: "dB",
-  interpolate: true,
-});
-const paletteFill = new PalettedFill({ lut, lookUpProperty: "value" });
-
 // Create ChartXY.
 const chart = lightningChart()
-  .ChartXY({
-    // theme: Themes.darkGold
-  })
-  .setTitle("Scrolling Heatmap Spectrogram");
+    .ChartXY({
+        // theme: Themes.darkGold
+    })
+    .setTitle('Scrolling Heatmap Spectrogram')
 chart
-  .getDefaultAxisX()
-  .setTitle("Time")
-  // Setup progressive scrolling Axis.
-  .setScrollStrategy(AxisScrollStrategies.progressive)
-  .setInterval(-10 * 1000, 0)
-  .setTickStrategy(AxisTickStrategies.Time);
-chart
-  .getDefaultAxisY()
-  .setTitle("Frequency (Hz)")
-  .setInterval(0, dataSampleSize, false, true);
+    .getDefaultAxisX()
+    .setTitle('Time')
+    // Setup progressive scrolling Axis.
+    .setScrollStrategy(AxisScrollStrategies.progressive)
+    .setInterval({ start: -10 * 1000, end: 0, stopAxisAfter: false })
+    .setTickStrategy(AxisTickStrategies.Time)
+
+chart.getDefaultAxisY().setTitle('Frequency (Hz)').setInterval({ start: 0, end: dataSampleSize })
+
+const theme = chart.getTheme()
+// Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
+const lut = new LUT({
+    steps: regularColorSteps(0, 75, theme.examples.spectrogramColorPalette),
+    units: 'dB',
+    interpolate: true,
+})
+const paletteFill = new PalettedFill({ lut, lookUpProperty: 'value' })
 
 // Create Scrolling Heatmap Grid Series.
 const heatmapSeries = chart
-  .addHeatmapScrollingGridSeries({
-    scrollDimension: "columns",
-    resolution: dataSampleSize,
-    start: { x: 0, y: 0 },
-    step: { x: sampleIntervalMs, y: 1 },
-  })
-  .setFillStyle(paletteFill)
-  .setWireframeStyle(emptyLine)
-  .setMouseInteractions(false)
-  // Configure automatic data cleaning.
-  .setDataCleaning({
-    // Out of view data can be lazily removed as long as total columns count remains over 1000.
-    minDataPointCount: 1000,
-  });
+    .addHeatmapScrollingGridSeries({
+        scrollDimension: 'columns',
+        resolution: dataSampleSize,
+        start: { x: 0, y: 0 },
+        step: { x: sampleIntervalMs, y: 1 },
+    })
+    .setFillStyle(paletteFill)
+    .setWireframeStyle(emptyLine)
+    // Configure automatic data cleaning.
+    .setDataCleaning({
+        // Out of view data can be lazily removed as long as total columns count remains over 1000.
+        minDataPointCount: 1000,
+    })
 
 // Add LegendBox to chart.
 const legend = chart
-  .addLegendBox(LegendBoxBuilders.HorizontalLegendBox)
-  // Dispose example UI elements automatically if they take too much space. This is to avoid bad UI on mobile / etc. devices.
-  .setAutoDispose({
-      type: 'max-width',
-      maxWidth: 0.80,
-  })
-  .add(chart)
+    .addLegendBox(LegendBoxBuilders.HorizontalLegendBox)
+    // Dispose example UI elements automatically if they take too much space. This is to avoid bad UI on mobile / etc. devices.
+    .setAutoDispose({
+        type: 'max-width',
+        maxWidth: 0.8,
+    })
+    .add(chart)
 
-// Stream in continous data.
-let dataAmount = 0;
+// Generate and stream example data.
+let dataAmount = 0
 createSpectrumDataGenerator()
-  .setSampleSize(dataSampleSize)
-  .setNumberOfSamples(1000)
-  .generate()
-  .setStreamRepeat(true)
-  .setStreamInterval(25)
-  .setStreamBatchSize(1)
-  .toStream()
-  // Scale Intensity values from [0.0, 1.0] to [0.0, 80]
-  .map((sample) => sample.map((intensity) => intensity * 80))
-  // Push Intensity values to Surface Grid as Columns.
-  .forEach((sample) => {
-    pushSample(sample)
-    dataAmount += sample.length;
-  });
-
-// The following logic ensures a static sampling rate, even if input data might vary.
-// This is done by skipping too frequent samples and duplicating too far apart samples.
-// The precision can be configured by simply changing value of `sampleRateHz`
-let lastSample
-let tFirstSample = 0
-const pushSample = (sample) => {
-  const tNow = performance.now()
-  if (lastSample === undefined) {
-      heatmapSeries.addIntensityValues([sample])
-      lastSample = { sample, time: tNow, i: 0 }
-      tFirstSample = tNow
-      return
-  }
-
-  let nextSampleIndex = lastSample.i + 1
-  let nextSampleTimeExact = tFirstSample + nextSampleIndex * sampleIntervalMs
-  let nextSampleTimeRangeMin = nextSampleTimeExact - sampleIntervalMs / 2
-  let nextSampleTimeRangeMax = nextSampleTimeExact + sampleIntervalMs / 2
-  if (tNow < nextSampleTimeRangeMin) {
-      // Too frequent samples must be scrapped. If this results in visual problems then sample rate must be increased.
-      // console.warn(`Skipped too frequent sample`)
-      return
-  }
-  if (tNow > nextSampleTimeRangeMax) {
-      // At least 1 sample was skipped. In this case, the missing sample slots are filled with the values of the last sample.
-      let repeatedSamplesCount = 0
-      do {
-          heatmapSeries.addIntensityValues([lastSample.sample])
-          repeatedSamplesCount += 1
-          nextSampleIndex += 1
-          nextSampleTimeExact = tFirstSample + nextSampleIndex * sampleIntervalMs
-          nextSampleTimeRangeMin = nextSampleTimeExact - sampleIntervalMs / 2
-          nextSampleTimeRangeMax = nextSampleTimeExact + sampleIntervalMs / 2
-      } while (tNow > nextSampleTimeRangeMax)
-
-      heatmapSeries.addIntensityValues([sample])
-      lastSample = { sample, time: tNow, i: nextSampleIndex }
-      // console.warn(`Filled ${repeatedSamplesCount} samples`)
-      return
-  }
-  // Sample arrived within acceptable, expected time range.
-  heatmapSeries.addIntensityValues([sample])
-  lastSample = { sample, time: tNow, i: nextSampleIndex }
-}
+    .setSampleSize(dataSampleSize)
+    .setNumberOfSamples(1000)
+    .generate()
+    .toPromise()
+    .then((data) => {
+        // Scale Intensity values from [0.0, 1.0] to [0.0, 80]
+        return data.map((sample) => sample.map((intensity) => intensity * 80))
+    })
+    .then((data) => {
+        // Stream data into series.
+        let tStart = window.performance.now()
+        let pushedDataCount = 0
+        const streamData = () => {
+            const tNow = window.performance.now()
+            // NOTE: This code is for example purposes (streaming stable data rate without destroying browser when switching tabs etc.)
+            // In real use cases, data should be pushed in when it comes.
+            const shouldBeDataPointsCount = Math.floor((sampleRateHz * (tNow - tStart)) / 1000)
+            const newDataPointsCount = Math.min(shouldBeDataPointsCount - pushedDataCount, 100) // Add max 100 samples per frame into a series. This prevents massive performance spikes when switching tabs for long times
+            if (newDataPointsCount > 0) {
+                const newDataPoints = []
+                for (let iDp = 0; iDp < newDataPointsCount; iDp++) {
+                    const iData = (pushedDataCount + iDp) % data.length
+                    const sample = data[iData]
+                    newDataPoints.push(sample)
+                }
+                heatmapSeries.addIntensityValues(newDataPoints)
+                pushedDataCount += newDataPointsCount
+                dataAmount += newDataPointsCount * dataSampleSize
+            }
+            requestAnimationFrame(streamData)
+        }
+        streamData()
+    })
 
 // Display incoming points amount in Chart title.
-const title = chart.getTitle();
-let tStart = Date.now();
-let lastReset = Date.now();
+const title = chart.getTitle()
+let tStart = Date.now()
+let lastReset = Date.now()
 const updateChartTitle = () => {
-  // Calculate amount of incoming points / second.
-  if (dataAmount > 0 && Date.now() - tStart > 0) {
-    const pps = (1000 * dataAmount) / (Date.now() - tStart);
-    chart.setTitle(`${title} (${Math.round(pps)} data points / s)`);
-  }
-  // Reset pps counter every once in a while in case page is frozen, etc.
-  if (Date.now() - lastReset >= 5000) {
-    tStart = lastReset = Date.now();
-    dataAmount = 0;
-  }
-};
-setInterval(updateChartTitle, 1000);
+    // Calculate amount of incoming points / second.
+    if (dataAmount > 0 && Date.now() - tStart > 0) {
+        const pps = (1000 * dataAmount) / (Date.now() - tStart)
+        chart.setTitle(`${title} (${Math.round(pps)} data points / s)`)
+    }
+    // Reset pps counter every once in a while in case page is frozen, etc.
+    if (Date.now() - lastReset >= 5000) {
+        tStart = lastReset = Date.now()
+        dataAmount = 0
+    }
+}
+setInterval(updateChartTitle, 1000)

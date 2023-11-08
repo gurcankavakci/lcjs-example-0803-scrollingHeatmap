@@ -123,13 +123,13 @@ Direct developer email support can be purchased through a [Support Plan][4] or b
 © LightningChart Ltd 2009-2022. All rights reserved.
 
 
-[Scrolling Heatmap Grid Series]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/classes/HeatmapScrollingGridSeriesIntensityValues.html
-[Paletted Fill Style]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/classes/PalettedFill.html
-[Color lookup table]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/classes/LUT.html
-[Color factory HSV]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/functions/ColorHSV.html
-[Empty line style]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/variables/emptyLine.html
-[Axis automatic scroll options]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/variables/AxisScrollStrategies.html
-[Chart XY]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/classes/ChartXY.html
-[Axis XY]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/classes/Axis.html
-[Legend Box]: https://lightningchart.com/js-charts/api-documentation/v4.2.0/classes/Chart.html#addLegendBox
+[Scrolling Heatmap Grid Series]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/classes/HeatmapScrollingGridSeriesIntensityValues.html
+[Paletted Fill Style]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/classes/PalettedFill.html
+[Color lookup table]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/classes/LUT.html
+[Color factory HSV]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/functions/ColorHSV.html
+[Empty line style]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/variables/emptyLine.html
+[Axis automatic scroll options]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/variables/AxisScrollStrategies.html
+[Chart XY]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/classes/ChartXY.html
+[Axis XY]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/classes/Axis.html
+[Legend Box]: https://lightningchart.com/js-charts/api-documentation/v5.0.1/classes/Chart.html#addLegendBox
 

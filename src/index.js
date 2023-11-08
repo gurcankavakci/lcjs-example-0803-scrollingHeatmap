@@ -21,9 +21,13 @@ const { createSpectrumDataGenerator } = require('@arction/xydata')
 
 // Length of single data sample.
 const dataSampleSize = 512
-// Sampling rate as samples per second.
+// Sampling rate as samples per second (only required for example purposes).
 const sampleRateHz = 100
-const sampleIntervalMs = 1000 / sampleRateHz
+// Minimum time step that can be displayed by the heatmap. In this example, set to half of average interval between samples. In normal applications you can set this to some comfortably small value.
+// Smaller value means more precision but more RAM and GPU memory usage.
+const heatmapMinTimeStepMs = (0.5 * 1000) / sampleRateHz
+// Time axis view at start
+const viewMs = 10 * 1000
 
 // Create ChartXY.
 const chart = lightningChart()
@@ -36,7 +40,7 @@ chart
     .setTitle('Time')
     // Setup progressive scrolling Axis.
     .setScrollStrategy(AxisScrollStrategies.progressive)
-    .setInterval({ start: -10 * 1000, end: 0, stopAxisAfter: false })
+    .setInterval({ start: -viewMs, end: 0, stopAxisAfter: false })
     .setTickStrategy(AxisTickStrategies.Time)
 
 chart.getDefaultAxisY().setTitle('Frequency (Hz)').setInterval({ start: 0, end: dataSampleSize })
@@ -56,7 +60,7 @@ const heatmapSeries = chart
         scrollDimension: 'columns',
         resolution: dataSampleSize,
         start: { x: 0, y: 0 },
-        step: { x: sampleIntervalMs, y: 1 },
+        step: { x: heatmapMinTimeStepMs, y: 1 },
     })
     .setFillStyle(paletteFill)
     .setWireframeStyle(emptyLine)
@@ -76,7 +80,16 @@ const legend = chart
     })
     .add(chart)
 
-// Generate and stream example data.
+const handleIncomingData = (timestamp, sample) => {
+    // Calculate sample index from timestamp to place sample in correct location in heatmap.
+    const iSample = Math.round(timestamp / heatmapMinTimeStepMs)
+    heatmapSeries.invalidateIntensityValues({
+        iSample,
+        values: [sample],
+    })
+}
+
+// Generate and stream example data. The below code would not be needed in a real application, this is only for example purposes.
 let dataAmount = 0
 createSpectrumDataGenerator()
     .setSampleSize(dataSampleSize)
@@ -88,26 +101,22 @@ createSpectrumDataGenerator()
         return data.map((sample) => sample.map((intensity) => intensity * 80))
     })
     .then((data) => {
-        // Stream data into series.
-        let tStart = window.performance.now()
-        let pushedDataCount = 0
+        let iData = 0
+        let tPrev = window.performance.now()
+        let dModulus = 0
         const streamData = () => {
             const tNow = window.performance.now()
-            // NOTE: This code is for example purposes (streaming stable data rate without destroying browser when switching tabs etc.)
-            // In real use cases, data should be pushed in when it comes.
-            const shouldBeDataPointsCount = Math.floor((sampleRateHz * (tNow - tStart)) / 1000)
-            const newDataPointsCount = Math.min(shouldBeDataPointsCount - pushedDataCount, 100) // Add max 100 samples per frame into a series. This prevents massive performance spikes when switching tabs for long times
-            if (newDataPointsCount > 0) {
-                const newDataPoints = []
-                for (let iDp = 0; iDp < newDataPointsCount; iDp++) {
-                    const iData = (pushedDataCount + iDp) % data.length
-                    const sample = data[iData]
-                    newDataPoints.push(sample)
-                }
-                heatmapSeries.addIntensityValues(newDataPoints)
-                pushedDataCount += newDataPointsCount
-                dataAmount += newDataPointsCount * dataSampleSize
+            let addDataPointCount = ((tNow - tPrev) * sampleRateHz) / 1000 + dModulus
+            dModulus = addDataPointCount % 1
+            addDataPointCount = Math.floor(addDataPointCount)
+            for (let i = 0; i < addDataPointCount; i += 1) {
+                const timestamp = tPrev + ((i + 1) / addDataPointCount) * (tNow - tPrev)
+                const sample = data[iData]
+                iData = (iData + 1) % data.length
+                handleIncomingData(timestamp, sample)
             }
+            dataAmount += addDataPointCount * dataSampleSize
+            tPrev = tNow
             requestAnimationFrame(streamData)
         }
         streamData()

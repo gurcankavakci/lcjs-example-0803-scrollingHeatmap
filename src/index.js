@@ -40,7 +40,7 @@ chart
     .setTitle('Time')
     // Setup progressive scrolling Axis.
     .setScrollStrategy(AxisScrollStrategies.progressive)
-    .setInterval({ start: -viewMs, end: 0, stopAxisAfter: false })
+    .setDefaultInterval((state) => ({ end: state.dataMax, start: (state.dataMax ?? 0) - viewMs, stopAxisAfter: false }))
     .setTickStrategy(AxisTickStrategies.Time)
 
 chart.getDefaultAxisY().setTitle('Frequency (Hz)').setInterval({ start: 0, end: dataSampleSize })

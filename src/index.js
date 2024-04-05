@@ -30,7 +30,9 @@ const heatmapMinTimeStepMs = (0.5 * 1000) / sampleRateHz
 const viewMs = 10 * 1000
 
 // Create ChartXY.
-const chart = lightningChart()
+const chart = lightningChart({
+            resourcesBaseUrl: new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pathname + 'resources/',
+        })
     .ChartXY({
         theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
     })

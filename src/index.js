@@ -2,7 +2,7 @@
  * LightningChartJS example that showcases simple usage of Scrolling Heatmap Grid Series.
  */
 // Import LightningChartJS
-const lcjs = require('@arction/lcjs')
+const lcjs = require('@lightningchart/lcjs')
 
 // Extract required parts from LightningChartJS.
 const {
@@ -17,7 +17,7 @@ const {
     Themes,
 } = lcjs
 
-const { createSpectrumDataGenerator } = require('@arction/xydata')
+const { createSpectrumDataGenerator } = require('@lightningchart/xydata')
 
 // Length of single data sample.
 const dataSampleSize = 512
@@ -45,7 +45,7 @@ chart
     .setDefaultInterval((state) => ({ end: state.dataMax, start: (state.dataMax ?? 0) - viewMs, stopAxisAfter: false }))
     .setTickStrategy(AxisTickStrategies.Time)
 
-chart.getDefaultAxisY().setTitle('Frequency (Hz)').setInterval({ start: 0, end: dataSampleSize })
+chart.getDefaultAxisY().setTitle('Frequency').setUnits('Hz').setInterval({ start: 0, end: dataSampleSize })
 
 const theme = chart.getTheme()
 // Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
@@ -61,9 +61,9 @@ const heatmapSeries = chart
     .addHeatmapScrollingGridSeries({
         scrollDimension: 'columns',
         resolution: dataSampleSize,
-        start: { x: 0, y: 0 },
-        step: { x: heatmapMinTimeStepMs, y: 1 },
     })
+    .setStart({ x: 0, y: 0 })
+    .setStep({ x: heatmapMinTimeStepMs, y: 1 })
     .setFillStyle(paletteFill)
     .setWireframeStyle(emptyLine)
     // Configure automatic data cleaning.

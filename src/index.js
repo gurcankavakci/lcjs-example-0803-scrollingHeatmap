@@ -22,10 +22,10 @@ const { createSpectrumDataGenerator } = require('@lightningchart/xydata')
 // Length of single data sample.
 const dataSampleSize = 512
 // Sampling rate as samples per second (only required for example purposes).
-const sampleRateHz = 100
+const sampleRateHz = 1
 // Minimum time step that can be displayed by the heatmap. In this example, set to half of average interval between samples. In normal applications you can set this to some comfortably small value.
 // Smaller value means more precision but more RAM and GPU memory usage.
-const heatmapMinTimeStepMs = (0.5 * 1000) / sampleRateHz
+const heatmapMinTimeStepMs = (1 * 1000) / sampleRateHz
 // Time axis view at start
 const viewMs = 10 * 1000
 
@@ -42,10 +42,10 @@ chart
     .setTitle('Time')
     // Setup progressive scrolling Axis.
     .setScrollStrategy(AxisScrollStrategies.progressive)
-    .setDefaultInterval((state) => ({ end: state.dataMax, start: (state.dataMax ?? 0) - viewMs, stopAxisAfter: false }))
+    .setInterval({start: 0, end:25000})
     .setTickStrategy(AxisTickStrategies.Time)
 
-chart.getDefaultAxisY().setTitle('Frequency').setUnits('Hz').setInterval({ start: 0, end: dataSampleSize })
+chart.getDefaultAxisY().setTitle('Frequency').setUnits('Hz').setInterval({ start: -1000, end: dataSampleSize + 1000})
 
 const theme = chart.getTheme()
 // Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
@@ -56,13 +56,14 @@ const lut = new LUT({
 })
 const paletteFill = new PalettedFill({ lut, lookUpProperty: 'value' })
 
+let x = 0;
 // Create Scrolling Heatmap Grid Series.
-const heatmapSeries = chart
+let heatmapSeries = chart
     .addHeatmapScrollingGridSeries({
         scrollDimension: 'columns',
         resolution: dataSampleSize,
     })
-    .setStart({ x: 0, y: 0 })
+    .setStart({ x, y: 0 })
     .setStep({ x: heatmapMinTimeStepMs, y: 1 })
     .setFillStyle(paletteFill)
     .setWireframeStyle(emptyLine)
@@ -71,6 +72,24 @@ const heatmapSeries = chart
         // Out of view data can be lazily removed as long as total columns count remains over 1000.
         minDataPointCount: 1000,
     })
+
+setInterval(() => {
+    x += 6000
+    heatmapSeries = chart
+    .addHeatmapScrollingGridSeries({
+        scrollDimension: 'columns',
+        resolution: dataSampleSize,
+    })
+    .setStart({ x, y: 0 })
+    .setStep({ x: heatmapMinTimeStepMs, y: 1 })
+    .setFillStyle(paletteFill)
+    .setWireframeStyle(emptyLine)
+    // Configure automatic data cleaning.
+    .setDataCleaning({
+        // Out of view data can be lazily removed as long as total columns count remains over 1000.
+        minDataPointCount: 1000,
+    })
+}, 5000);
 
 // Add LegendBox to chart.
 const legend = chart
@@ -85,10 +104,7 @@ const legend = chart
 const handleIncomingData = (timestamp, sample) => {
     // Calculate sample index from timestamp to place sample in correct location in heatmap.
     const iSample = Math.round(timestamp / heatmapMinTimeStepMs)
-    heatmapSeries.invalidateIntensityValues({
-        iSample,
-        values: [sample],
-    })
+    heatmapSeries.addIntensityValues([sample])
 }
 
 // Generate and stream example data. The below code would not be needed in a real application, this is only for example purposes.

@@ -15,12 +15,13 @@ const {
     LegendBoxBuilders,
     regularColorSteps,
     Themes,
+    ColorRGBA
 } = lcjs
 
 const { createSpectrumDataGenerator } = require('@lightningchart/xydata')
 
 // Length of single data sample.
-const dataSampleSize = 512
+const dataSampleSize = 1500
 // Sampling rate as samples per second (only required for example purposes).
 const sampleRateHz = 1
 // Minimum time step that can be displayed by the heatmap. In this example, set to half of average interval between samples. In normal applications you can set this to some comfortably small value.
@@ -49,12 +50,19 @@ chart.getDefaultAxisY().setTitle('Frequency').setUnits('Hz').setInterval({ start
 
 const theme = chart.getTheme()
 // Setup PalettedFill for dynamically coloring Heatmap by Intensity values.
-const lut = new LUT({
-    steps: regularColorSteps(0, 75, theme.examples.spectrogramColorPalette),
-    units: 'dB',
-    interpolate: true,
-})
-const paletteFill = new PalettedFill({ lut, lookUpProperty: 'value' })
+// const lut = new LUT({
+//     steps: regularColorSteps(-80, -45, theme.examples.spectrogramColorPalette),
+//     units: 'dB',
+//     interpolate: true,
+// })
+// const paletteFill = new PalettedFill({ lut, lookUpProperty: 'value' })
+const paletteFill = new PalettedFill({ lut: new LUT({ 
+    steps: [
+        { value: 0, color: ColorRGBA(255, 0, 0) },
+        { value: -45, color: ColorRGBA(0, 255, 0) },
+        { value: -80, color: ColorRGBA(0, 0, 0) },
+      ] 
+}) })
 
 let x = 0;
 // Create Scrolling Heatmap Grid Series.
@@ -104,7 +112,15 @@ const legend = chart
 const handleIncomingData = (timestamp, sample) => {
     // Calculate sample index from timestamp to place sample in correct location in heatmap.
     const iSample = Math.round(timestamp / heatmapMinTimeStepMs)
-    heatmapSeries.addIntensityValues([sample])
+    let yy = new Array(dataSampleSize)
+    let counter = -80;
+    for(let i=0;i<dataSampleSize;i++){
+        if(i%42==0){
+            counter ++
+        }
+        yy[i] = counter
+    }
+    heatmapSeries.addIntensityValues([yy])
 }
 
 // Generate and stream example data. The below code would not be needed in a real application, this is only for example purposes.
